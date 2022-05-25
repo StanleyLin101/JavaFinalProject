@@ -53,8 +53,6 @@ public abstract class BBtan implements Initializable {
 	public Rectangle paddle;
 //<<<<<<< master
 
-
-
 	// control the audio
 	private AudioManager audioManager = new AudioManager();
 
@@ -68,6 +66,13 @@ public abstract class BBtan implements Initializable {
 	// bombs
 	public ArrayList<Bomb> bombs = new ArrayList<>();
 
+	// Circle
+	public ArrayList<Circle> circles = new ArrayList();
+	
+	public ArrayList<Double> circleX = new ArrayList();
+	public ArrayList<Double> circleY = new ArrayList();
+	int XYidx = 0;
+
 	// go back to menu
 	private SceneController sceneController = new SceneController();
 
@@ -77,11 +82,8 @@ public abstract class BBtan implements Initializable {
 	private double intervalOfBricksWidth = 50;
 	private double intervalOfBricksHeight = 50;
 
-  	 
-    
-    
-    private int rateOfBomb=100;
-    private int rateOfBrick=2;
+	private int rateOfBomb = 100;
+	private int rateOfBrick = 2;
 
 	/// public class
 
@@ -93,13 +95,18 @@ public abstract class BBtan implements Initializable {
 
 			circle.setLayoutX(circle.getLayoutX() + deltaX);
 			circle.setLayoutY(circle.getLayoutY() + deltaY);
+			
+			circleX.add(circle.getLayoutX());
+			circleY.add(circle.getLayoutY());
+			/*System.out.println("X: "+ circle.getLayoutX());
+			System.out.println("Y: "+ circle.getLayoutY());*/
 
 			if (!bricks.isEmpty()) {
 				bricks.removeIf(brick -> checkCollisionBrick(brick));
 
-			}else{
-            	Reset();
-            }
+			} else {
+				Reset();
+			}
 			if (!bombs.isEmpty()) {
 				bombs.removeIf(bomb -> checkCollisionBomb(bomb));
 			}
@@ -109,10 +116,15 @@ public abstract class BBtan implements Initializable {
 
 			checkCollisionScene(scene);
 			checkCollisionBottomZone();
-
 		}
 	}));
 
+	public Timeline circleTimeline = new Timeline(new KeyFrame(Duration.millis(7.5), e ->{
+
+		circles.get(0).setLayoutX(circleX.get(XYidx));
+		circles.get(0).setLayoutY(circleY.get(XYidx));
+		XYidx++;
+	}));
 	// call checkGameOver to know if the game is over
 	public Timeline checkGameOver = new Timeline(new KeyFrame(Duration.ONE, new EventHandler<ActionEvent>() {
 
@@ -128,59 +140,60 @@ public abstract class BBtan implements Initializable {
 	public void muteButtonAction(ActionEvent event) {
 
 	}
-	
+
 	public void pauseButtonAction(ActionEvent event) throws IOException {
-		
+
 		timeline.pause();
 		scene.setDisable(true);
-		
-		FXMLLoader loader=new FXMLLoader(getClass().getResource(Mode.Pause.getPath()));
-		Parent root=loader.load();				
-		Scene pause=new Scene(root);
-		Stage stage=new Stage();
+
+		FXMLLoader loader = new FXMLLoader(getClass().getResource(Mode.Pause.getPath()));
+		Parent root = loader.load();
+		Scene pause = new Scene(root);
+		Stage stage = new Stage();
 		stage.setScene(pause);
 		stage.show();
-		
-		PauseController pauseController=loader.getController();		
+
+		PauseController pauseController = loader.getController();
 		pauseController.menuBtn.pressedProperty().addListener((observable, wasPressed, pressed) -> {
-	        
-	        if (pressed) {
-	        	try {
-	        		scene.setDisable(false);
-					sceneController.switchScene(scene,Mode.Menu.getPath());
+
+			if (pressed) {
+				try {
+					scene.setDisable(false);
+					sceneController.switchScene(scene, Mode.Menu.getPath());
 					stage.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-	        } 
-	    });
+			}
+		});
 		pauseController.restartBtn.pressedProperty().addListener((observable, wasPressed, pressed) -> {
-	        
-	        if (pressed) {
-	        	try {
-	        		scene.setDisable(false);
-	        		sceneController.switchScene(scene,Mode.mode.getPath());
-	    			stage.close();
+
+			if (pressed) {
+				try {
+					scene.setDisable(false);
+					sceneController.switchScene(scene, Mode.mode.getPath());
+					stage.close();
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-	        } 
-	    });
+			}
+		});
 		pauseController.continueBtn.pressedProperty().addListener((observable, wasPressed, pressed) -> {
-	        
-	        if (pressed) {
-	        	scene.setDisable(false);
-	        	if(Mode.mode.equals(Mode.Simple))timeline.play();
-	        	if(Mode.mode.equals(Mode.Endless)||Mode.mode.equals(Mode.FallingBricks)) {
-	        		if(circle.getLayoutY()!=bottomZone.getLayoutY()-circle.getRadius()-2)timeline.play();
-	        	}
+
+			if (pressed) {
+				scene.setDisable(false);
+				if (Mode.mode.equals(Mode.Simple))
+					timeline.play();
+				if (Mode.mode.equals(Mode.Endless) || Mode.mode.equals(Mode.FallingBricks)) {
+					if (circle.getLayoutY() != bottomZone.getLayoutY() - circle.getRadius() - 2)
+						timeline.play();
+				}
 				stage.close();
-	        } 
-	    });
-		
-	
+			}
+		});
+
 	}
 
 	@Override
@@ -192,7 +205,16 @@ public abstract class BBtan implements Initializable {
 
 		timeline.setCycleCount(Animation.INDEFINITE);
 
+		for (int i = 0; i < 3; i++) {
+			 Circle kreis1 = new Circle(0, 0, 10, Color.BLACK);
+			 /*kreis1.setLayoutX(circle.getLayoutX() + deltaX);
+			 kreis1.setLayoutY(circle.getLayoutY() + deltaY);*/
+			 circles.add(kreis1);
+			 scene.getChildren().add(kreis1);
+		}
+		
 		initialize();
+		
 
 	}
 
@@ -204,40 +226,43 @@ public abstract class BBtan implements Initializable {
 	public void startGameButtonAction(ActionEvent event) {
 
 		if (Mode.mode.equals(Mode.FallingBricks)) {
-			
+
 			ArrangeFallingBricks();
 			checkGameOver.play();
-			
-		} else if(Mode.mode.equals(Mode.Endless)) {
-			
+			circleTimeline.setCycleCount(Animation.INDEFINITE);
+			circleTimeline.play();
+
+		} else if (Mode.mode.equals(Mode.Endless)) {
+
 			ArrangeEndlessBricks();
 			checkGameOver.play();
-			
-		}else {
+
+		} else {
 			ArrangeSimpleBricks();
 		}
-		
 
 		startBtn.setVisible(false);
 		menuBtn.setVisible(false);
-		
-		if(!Mode.mode.equals(Mode.CountDown))pauseBtn.setVisible(true);
+
+		if (!Mode.mode.equals(Mode.CountDown))
+			pauseBtn.setVisible(true);
 
 		startGame();
 	}
 
 	public abstract void startGame();
 
-	private void createFallingBricks(double x,double y) {
-		
-		Random random=new Random();
+	private void createFallingBricks(double x, double y) {
+
+		Random random = new Random();
 		Integer BricksHitCount = random.nextInt(1, 10);
-		Brick brick=new Brick(BricksHitCount.toString());
+		Brick brick = new Brick(BricksHitCount.toString());
 		brick.setLayoutX(x);
 		brick.setLayoutY(y);
 		scene.getChildren().add(brick);
 		bricks.add(brick);
 	}
+
 	public void ArrangeFallingBricks() {
 
 		Random random = new Random();
@@ -251,10 +276,9 @@ public abstract class BBtan implements Initializable {
 						createBombs(j, i);
 				}
 
-				
 			}
 		}
-		
+
 	}
 
 	private void createBricks(double x, double y) {
@@ -293,7 +317,7 @@ public abstract class BBtan implements Initializable {
 		}
 
 	}
-	
+
 	public void ArrangeSimpleBricks() {
 		Random random = new Random();
 
@@ -301,7 +325,7 @@ public abstract class BBtan implements Initializable {
 			for (double j = width; j > 0; j = j - intervalOfBricksWidth) {
 				if (random.nextInt(2) == 1) {
 					createBricks(j, i);
-				} 
+				}
 			}
 		}
 
@@ -311,10 +335,15 @@ public abstract class BBtan implements Initializable {
 	public boolean checkCollisionBrick(Brick brick) {
 
 		if (circle.getBoundsInParent().intersects(brick.getBoundsInParent())) {
-			boolean rightBorder = circle.getLayoutX() >= ((brick.getLayoutX() + brick.getWidth() + brick.getBorderWidth()) - circle.getRadius());
-			boolean leftBorder = circle.getLayoutX() <= (brick.getLayoutX() - brick.getBorderWidth() + circle.getRadius());
-			boolean bottomBorder = circle.getLayoutY() >= ((brick.getLayoutY() + brick.getHeight()) + brick.getBorderWidth() - circle.getRadius());
-			boolean topBorder = circle.getLayoutY() <= (brick.getLayoutY() - brick.getBorderWidth() + circle.getRadius());
+			boolean rightBorder = circle
+					.getLayoutX() >= ((brick.getLayoutX() + brick.getWidth() + brick.getBorderWidth())
+							- circle.getRadius());
+			boolean leftBorder = circle
+					.getLayoutX() <= (brick.getLayoutX() - brick.getBorderWidth() + circle.getRadius());
+			boolean bottomBorder = circle.getLayoutY() >= ((brick.getLayoutY() + brick.getHeight())
+					+ brick.getBorderWidth() - circle.getRadius());
+			boolean topBorder = circle
+					.getLayoutY() <= (brick.getLayoutY() - brick.getBorderWidth() + circle.getRadius());
 
 			if (leftBorder || rightBorder) {
 
@@ -327,38 +356,36 @@ public abstract class BBtan implements Initializable {
 			}
 
 			audioManager.playMusic(Music.brickDestroy);
-			
+
 			if (Mode.mode.equals(Mode.Simple)) {
 				paddle.setWidth(paddle.getWidth() - (0.10 * paddle.getWidth()));
 			}
 
 			if (Mode.mode.equals(Mode.FallingBricks)) {
-				
-				Integer count=Integer.parseInt(brick.getText());
+
+				Integer count = Integer.parseInt(brick.getText());
 				System.out.println(count);
-				
+
 				count--;
-				if(count<=0) {
+				if (count <= 0) {
 					scene.getChildren().remove(brick);
 
-					makeExplosion(brick.getLayoutX() + brick.getWidth() / 2, brick.getLayoutY() + brick.getHeight() / 2);
-					
-					
+					makeExplosion(brick.getLayoutX() + brick.getWidth() / 2,
+							brick.getLayoutY() + brick.getHeight() / 2);
+
 					return true;
-				}
-				else {
+				} else {
 					brick.setText(count.toString());
 				}
-				
-			}else {
+
+			} else {
 				scene.getChildren().remove(brick);
 
 				makeExplosion(brick.getLayoutX() + brick.getWidth() / 2, brick.getLayoutY() + brick.getHeight() / 2);
 
 				return true;
 			}
-				
-			
+
 		}
 
 		return false;
@@ -420,122 +447,108 @@ public abstract class BBtan implements Initializable {
 			Reset();
 		}
 
-    	if(brick.getLayoutY()>=bottomZone.getLayoutY()-brick.getHeight()-10) {
-    		Reset();
-    	}
-    }
-    
-    //Once the circle collide with the brick, distribute fragments
-    private void makeExplosion(double x,double y){
-    	
-    	Explosion explosion=new Explosion();
-        scene.getChildren().add(explosion.getExplosionGroup());
-        explosion.startExplode(x,y);
-    }
-    
-    
-    //check if the circle collide with the bounds of the scene
-    private void checkCollisionScene(Node node){
-        Bounds bounds = node.getLayoutBounds();
-                   
-    	boolean rightBorder = circle.getLayoutX() >= (bounds.getMaxX() - circle.getRadius());
-        boolean leftBorder = circle.getLayoutX() <= (bounds.getMinX() + circle.getRadius());
-        boolean topBorder = circle.getLayoutY() <= (bounds.getMinY() + circle.getRadius());
-        
+		if (brick.getLayoutY() >= bottomZone.getLayoutY() - brick.getHeight() - 10) {
+			Reset();
+		}
+	}
 
-        if (rightBorder || leftBorder) {
-            deltaX *= -1;
-            
-        }
-        if(topBorder) {
-        	deltaY*=-1;
-        } 
+	// Once the circle collide with the brick, distribute fragments
+	private void makeExplosion(double x, double y) {
 
-        
-    }
-    
-    //check if the circle collide with the bottomZone
-    public void checkCollisionBottomZone(){
-        
-    	
-    	if(circle.getBoundsInParent().intersects(bottomZone.getBoundsInParent())){
-            
-        	timeline.stop();           
-            
-            deltaX = 0;
-            deltaY = -1;
-            
-            circle.setLayoutY(bottomZone.getLayoutY()-circle.getRadius()-2);  
-            
-            if(Mode.mode.equals(Mode.FallingBricks)) {
-            	FallingBricksDown();
-            	
-            }else {
-            	bricksBombsDown();
-            }
-            
-       }
-        
-        
-        
-		
-    }
-	   
-    //after circle go back to bottomZone, bricks fall down
-    private void bricksBombsDown() {
-    	
-    	
-    	for(int i=0;i<bricks.size();i++) {
-    		
-    		Brick brick=bricks.get(i);
-    		brick.setLayoutY(brick.getLayoutY()+intervalOfBricksHeight);
-    	}  
-    	for(int i=0;i<bombs.size();i++) {
-    		
-    		Bomb bomb=bombs.get(i);
-    		bomb.setLayoutY(bomb.getLayoutY()+intervalOfBricksHeight);
-    	}
-        Random random=new Random();
+		Explosion explosion = new Explosion();
+		scene.getChildren().add(explosion.getExplosionGroup());
+		explosion.startExplode(x, y);
+	}
 
-        
-        double i=50;
-        for (double j = width; j > 0 ; j = j - intervalOfBricksWidth) {
-            if(random.nextInt(rateOfBrick)==1){
-                createBricks(j,i);
-            }
-            else if(random.nextInt(rateOfBomb)==1){
-            	createBombs(j,i);
-            }
-            
-        }
-       
-    	
-    }
+	// check if the circle collide with the bounds of the scene
+	private void checkCollisionScene(Node node) {
+		Bounds bounds = node.getLayoutBounds();
 
+		boolean rightBorder = circle.getLayoutX() >= (bounds.getMaxX() - circle.getRadius());
+		boolean leftBorder = circle.getLayoutX() <= (bounds.getMinX() + circle.getRadius());
+		boolean topBorder = circle.getLayoutY() <= (bounds.getMinY() + circle.getRadius());
 
+		if (rightBorder || leftBorder) {
+			deltaX *= -1;
+
+		}
+		if (topBorder) {
+			deltaY *= -1;
+		}
+
+	}
+
+	// check if the circle collide with the bottomZone
+	public void checkCollisionBottomZone() {
+
+		if (circle.getBoundsInParent().intersects(bottomZone.getBoundsInParent())) {
+
+			timeline.stop();
+
+			deltaX = 0;
+			deltaY = -1;
+
+			circle.setLayoutY(bottomZone.getLayoutY() - circle.getRadius() - 2);
+
+			if (Mode.mode.equals(Mode.FallingBricks)) {
+				FallingBricksDown();
+
+			} else {
+				bricksBombsDown();
+			}
+
+		}
+
+	}
+
+	// after circle go back to bottomZone, bricks fall down
+	private void bricksBombsDown() {
+
+		for (int i = 0; i < bricks.size(); i++) {
+
+			Brick brick = bricks.get(i);
+			brick.setLayoutY(brick.getLayoutY() + intervalOfBricksHeight);
+		}
+		for (int i = 0; i < bombs.size(); i++) {
+
+			Bomb bomb = bombs.get(i);
+			bomb.setLayoutY(bomb.getLayoutY() + intervalOfBricksHeight);
+		}
+		Random random = new Random();
+
+		double i = 50;
+		for (double j = width; j > 0; j = j - intervalOfBricksWidth) {
+			if (random.nextInt(rateOfBrick) == 1) {
+				createBricks(j, i);
+			} else if (random.nextInt(rateOfBomb) == 1) {
+				createBombs(j, i);
+			}
+
+		}
+
+	}
 
 	public void FallingBricksDown() {
 		for (int i = 0; i < bricks.size(); i++) {
 
 			Brick brick = bricks.get(i);
-			brick.setLayoutY(brick.getLayoutY()+intervalOfBricksHeight);
+			brick.setLayoutY(brick.getLayoutY() + intervalOfBricksHeight);
 		}
-		for(int i=0;i<bombs.size();i++) {
-    		
-    		Bomb bomb=bombs.get(i);
-    		bomb.setLayoutY(bomb.getLayoutY()+intervalOfBricksHeight);
-    	}
+		for (int i = 0; i < bombs.size(); i++) {
+
+			Bomb bomb = bombs.get(i);
+			bomb.setLayoutY(bomb.getLayoutY() + intervalOfBricksHeight);
+		}
 
 		Random random = new Random();
-		double i=50;
-        for (double j = width; j > 0 ; j = j - intervalOfBricksWidth) {
-            if(random.nextInt(rateOfBrick)==1){
-                createFallingBricks(j,i);
-            }
-            else if(random.nextInt(rateOfBomb)==1){
-            	createBombs(j,i);
-            }
-            
-        }
+		double i = 50;
+		for (double j = width; j > 0; j = j - intervalOfBricksWidth) {
+			if (random.nextInt(rateOfBrick) == 1) {
+				createFallingBricks(j, i);
+			} else if (random.nextInt(rateOfBomb) == 1) {
+				createBombs(j, i);
+			}
+
+		}
 	}
 }
