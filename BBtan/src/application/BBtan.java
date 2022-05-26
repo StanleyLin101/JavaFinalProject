@@ -67,6 +67,10 @@ public abstract class BBtan implements Initializable {
 
 	// bombs
 	public ArrayList<Bomb> bombs = new ArrayList<>();
+	
+	// Ball	
+	public ArrayList<Circle> Ball = new ArrayList<>();	
+	int BallCount = 1;	
 
 	// go back to menu
 	private SceneController sceneController = new SceneController();
@@ -469,7 +473,17 @@ public abstract class BBtan implements Initializable {
             
             if(Mode.mode.equals(Mode.FallingBricks)) {
             	FallingBricksDown();
-            	
+            	//reset all Ball x and y
+            	for(int i = 0 ;i<Ball.size();i++)
+            	{
+            		Ball.get(i).setLayoutX(circle.getLayoutX());
+            		Ball.get(i).setLayoutY(circle.getLayoutY());
+            	}
+            	//add Ball	
+            	Circle newBall = new Circle(circle.getLayoutX(),circle.getLayoutY(),10,Color.BLACK);
+            	Ball.add(newBall);
+            	scene.getChildren().add(newBall);
+            	BallCount++;	
             }else {
             	bricksBombsDown();
             }
