@@ -70,6 +70,8 @@ public abstract class BBtan implements Initializable {
 	
 	// Ball	
 	public ArrayList<Circle> Ball = new ArrayList<>();	
+	public ArrayList<Double> DeltaXArr = new ArrayList<>();	
+	public ArrayList<Double> DeltaYArr = new ArrayList<>();	
 	int BallCount = 1;	
 
 	// go back to menu
@@ -97,6 +99,21 @@ public abstract class BBtan implements Initializable {
 
 			circle.setLayoutX(circle.getLayoutX() + deltaX);
 			circle.setLayoutY(circle.getLayoutY() + deltaY);
+			//System.out.println("Current Dx: "+ deltaX);
+			//System.out.println("Current Dy: "+ deltaY);
+			DeltaXArr.set(0, deltaX);
+			DeltaYArr.set(0, deltaY);
+			//reset all ball deltaX deltaY
+			for(int i = 1 ;i<Ball.size();i++)
+			{
+				DeltaXArr.set(i, deltaX);
+				DeltaYArr.set(i, deltaY);
+			}
+			for(int i = 1 ;i<Ball.size();i++) //index start from 1, index=0 is origin ball 
+			{
+				Ball.get(i).setLayoutX(Ball.get(i).getLayoutX() + DeltaXArr.get(i));
+				Ball.get(i).setLayoutY(Ball.get(i).getLayoutY() + DeltaYArr.get(i));
+			}
 
 			if (!bricks.isEmpty()) {
 				bricks.removeIf(brick -> checkCollisionBrick(brick));
@@ -193,6 +210,8 @@ public abstract class BBtan implements Initializable {
 
 		deltaX = 1;
 		deltaY = -1;
+		DeltaXArr.add(deltaX);
+		DeltaYArr.add(deltaY);
 
 		timeline.setCycleCount(Animation.INDEFINITE);
 
@@ -339,7 +358,7 @@ public abstract class BBtan implements Initializable {
 			if (Mode.mode.equals(Mode.FallingBricks)) {
 				
 				Integer count=Integer.parseInt(brick.getText());
-				System.out.println(count);
+				//System.out.println(count);
 				
 				count--;
 				if(count<=0) {
@@ -449,10 +468,11 @@ public abstract class BBtan implements Initializable {
 
         if (rightBorder || leftBorder) {
             deltaX *= -1;
-            
+			DeltaXArr.set(0, deltaX);
         }
         if(topBorder) {
         	deltaY*=-1;
+			DeltaYArr.set(0, deltaY);
         } 
 
         
@@ -469,6 +489,7 @@ public abstract class BBtan implements Initializable {
             deltaX = 0;
             deltaY = -1;
             
+            
             circle.setLayoutY(bottomZone.getLayoutY()-circle.getRadius()-2);  
             
             if(Mode.mode.equals(Mode.FallingBricks)) {
@@ -484,6 +505,19 @@ public abstract class BBtan implements Initializable {
             	Ball.add(newBall);
             	scene.getChildren().add(newBall);
             	BallCount++;	
+            	//set new ball default deltax and deltay
+        		DeltaXArr.add((double) 1);
+        		DeltaYArr.add((double) -1);
+        		
+            		System.out.println("Dx= "+ DeltaXArr.get(0));
+            		System.out.println("Dy= "+ DeltaYArr.get(0));
+            		System.out.println("========================");
+            		System.out.println("Dx= "+ DeltaXArr.get(1));
+            		System.out.println("Dy= "+ DeltaYArr.get(1));
+            		System.out.println("========================");
+            		System.out.println("Dx= "+ DeltaXArr.get(2));
+            		System.out.println("Dy= "+ DeltaYArr.get(2));
+            		System.out.println("========================");
             }else {
             	bricksBombsDown();
             }
