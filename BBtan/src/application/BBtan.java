@@ -74,6 +74,10 @@ public abstract class BBtan implements Initializable {
 	public ArrayList<Double> DeltaXArr = new ArrayList<>();	
 	public ArrayList<Double> DeltaYArr = new ArrayList<>();	
 	int BallCount = 1;	
+	//Border
+	Rectangle LeftBorder;
+	Rectangle RightBorder;
+	Rectangle TopBorder;
 
 	// go back to menu
 	private SceneController sceneController = new SceneController();
@@ -127,7 +131,13 @@ public abstract class BBtan implements Initializable {
 			// also deltaX=0 and deltaY!=0
 
 			checkCollisionScene(scene);
+			
+		    if(Mode.mode.equals(Mode.FallingBricks) && BallCount > 1)
+		    {
+		    	checkNewBallCollisionScene();
+		    }
 			checkCollisionBottomZone();
+			
 
 		}
 	}));
@@ -510,33 +520,41 @@ public abstract class BBtan implements Initializable {
         if(topBorder) {
         	deltaY*=-1;
         } 
-        if(BallCount >1 && Mode.mode.equals(Mode.FallingBricks))
-        {
-        	/*for(int i = 1 ;i<Ball.size();i++)
-        	{
-        		boolean NewrightBorder = Ball.get(i).getLayoutX() >= (bounds.getMaxX() - Ball.get(i).getRadius());
-        		boolean NewleftBorder = Ball.get(i).getLayoutX() <= (bounds.getMinX() + Ball.get(i).getRadius());
-        		boolean NewtopBorder = Ball.get(i).getLayoutY() <= (bounds.getMinY() + Ball.get(i).getRadius());       
-        		if (NewrightBorder || NewleftBorder) {
-        			double tmpDeltaX = DeltaXArr.get(i);
-        			tmpDeltaX *= -1;
-        			DeltaXArr.set(i, tmpDeltaX);
-        		}
-        		if(NewtopBorder) {
-        			double tmpDeltaY = DeltaYArr.get(i);
-        			tmpDeltaY *= -1;
-        			DeltaYArr.set(i, tmpDeltaY);
-        		} 
-        		System.out.println(NewrightBorder);
-        		System.out.println(NewleftBorder);
-        		System.out.println(NewtopBorder);
-        		System.out.println(i+" Current Dx: "+ DeltaXArr.get(i));
-        		System.out.println(i+" Current Dy: "+ DeltaYArr.get(i));
-        	}*/
-        }
+
 
     }
-    
+    private void AddBorder()
+    {
+    	Rectangle LeftBorder = new Rectangle(0, -1, 6, 593);
+    	LeftBorder.setStroke(Color.TRANSPARENT);
+    	LeftBorder.setFill(Color.TRANSPARENT);
+    	scene.getChildren().add(LeftBorder);
+    		
+    	Rectangle RightBorder = new Rectangle(604, -1, 6, 593);
+    	RightBorder.setStroke(Color.TRANSPARENT);
+    	scene.getChildren().add(RightBorder);
+    		
+    	Rectangle TopBorder = new Rectangle(1, 0, 607, 4);
+    	TopBorder.setStroke(Color.TRANSPARENT);
+    	scene.getChildren().add(TopBorder);
+    }
+    private void checkNewBallCollisionScene()
+    {
+    		for(int i = 1 ;i<Ball.size();i++)
+    		{
+        		if(Ball.get(i).getBoundsInParent().intersects(LeftBorder.getBoundsInParent()) || Ball.get(i).getBoundsInParent().intersects(RightBorder.getBoundsInParent())){
+    				double tmpDeltaX = DeltaXArr.get(i);
+    				tmpDeltaX *= -1;
+    				DeltaXArr.set(i, tmpDeltaX);
+        		}	
+        		if(Ball.get(i).getBoundsInParent().intersects(LeftBorder.getBoundsInParent()))
+        		{
+    				double tmpDeltaY = DeltaYArr.get(i);
+    				tmpDeltaY *= -1;
+    				DeltaYArr.set(i, tmpDeltaY);
+        		}
+    		}
+    }
     //check if the circle collide with the bottomZone
     public void checkCollisionBottomZone(){
         
@@ -581,6 +599,10 @@ public abstract class BBtan implements Initializable {
             	//set new ball default deltax and deltay
         		DeltaXArr.add((double) 1);
         		DeltaYArr.add((double) -1);
+            	if(BallCount == 2 && Mode.mode.equals(Mode.FallingBricks))
+                {
+            		AddBorder();
+                }
 
             }else {
             	bricksBombsDown();
