@@ -69,6 +69,7 @@ public abstract class BBtan implements Initializable {
 	public ArrayList<Bomb> bombs = new ArrayList<>();
 	
 	// Ball	
+	public Circle newBall;
 	public ArrayList<Circle> Ball = new ArrayList<>();	
 	public ArrayList<Double> DeltaXArr = new ArrayList<>();	
 	public ArrayList<Double> DeltaYArr = new ArrayList<>();	
@@ -97,19 +98,13 @@ public abstract class BBtan implements Initializable {
 		@Override
 		public void handle(ActionEvent actionEvent) {
 
+			//origin Ball
 			circle.setLayoutX(circle.getLayoutX() + deltaX);
 			circle.setLayoutY(circle.getLayoutY() + deltaY);
 			//System.out.println("Current Dx: "+ deltaX);
 			//System.out.println("Current Dy: "+ deltaY);
-			DeltaXArr.set(0, deltaX);
-			DeltaYArr.set(0, deltaY);
-			//reset all ball deltaX deltaY
-			for(int i = 1 ;i<Ball.size();i++)
-			{
-				DeltaXArr.set(i, deltaX);
-				DeltaYArr.set(i, deltaY);
-			}
-			for(int i = 1 ;i<Ball.size();i++) //index start from 1, index=0 is origin ball 
+
+			for(int i = 1 ;i<Ball.size();i++) //new Ball start from index=1, index=0 is origin ball 
 			{
 				Ball.get(i).setLayoutX(Ball.get(i).getLayoutX() + DeltaXArr.get(i));
 				Ball.get(i).setLayoutY(Ball.get(i).getLayoutY() + DeltaYArr.get(i));
@@ -117,7 +112,10 @@ public abstract class BBtan implements Initializable {
 
 			if (!bricks.isEmpty()) {
 				bricks.removeIf(brick -> checkCollisionBrick(brick));
-
+				if(Mode.mode.equals(Mode.FallingBricks))
+				{
+					bricks.removeIf(brick -> checkNewBallCollisionBrick(brick));	
+				}
 			}else{
             	Reset();
             }
@@ -210,6 +208,7 @@ public abstract class BBtan implements Initializable {
 
 		deltaX = 1;
 		deltaY = -1;
+		Ball.add(circle);
 		DeltaXArr.add(deltaX);
 		DeltaYArr.add(deltaY);
 
@@ -386,7 +385,47 @@ public abstract class BBtan implements Initializable {
 
 		return false;
 	}
+	public boolean checkNewBallCollisionBrick(Brick brick)
+	{
+		if (BallCount > 1 && newBall.getBoundsInParent().intersects(brick.getBoundsInParent())) {
+			System.out.println("Collision Brick with Ball Id= " + newBall.getId());
+			boolean rightBorder = newBall.getLayoutX() >= ((brick.getLayoutX() + brick.getWidth() + brick.getBorderWidth()) - newBall.getRadius());
+			boolean leftBorder = newBall.getLayoutX() <= (brick.getLayoutX() - brick.getBorderWidth() + newBall.getRadius());
+			boolean bottomBorder = newBall.getLayoutY() >= ((brick.getLayoutY() + brick.getHeight()) + brick.getBorderWidth() - newBall.getRadius());
+			boolean topBorder = newBall.getLayoutY() <= (brick.getLayoutY() - brick.getBorderWidth() + newBall.getRadius());
 
+			if (leftBorder || rightBorder) {
+				double tmpDeltaX = DeltaXArr.get(Integer.valueOf(newBall.getId()));
+				tmpDeltaX *= -1;
+				DeltaXArr.set(Integer.valueOf(newBall.getId()), tmpDeltaX);
+			}
+
+			if (bottomBorder || topBorder) {
+				double tmpDeltaY = DeltaYArr.get(Integer.valueOf(newBall.getId()));
+				tmpDeltaY *= -1;
+				DeltaYArr.set(Integer.valueOf(newBall.getId()), tmpDeltaY);
+			}
+
+			audioManager.playMusic(Music.brickDestroy);
+				
+			Integer count=Integer.parseInt(brick.getText());
+			//System.out.println(count);
+				
+			count--;
+			if(count<=0) 
+			{
+				scene.getChildren().remove(brick);
+				makeExplosion(brick.getLayoutX() + brick.getWidth() / 2, brick.getLayoutY() + brick.getHeight() / 2);
+				return true;
+			}
+			else 
+			{
+				brick.setText(count.toString());
+			}
+		}
+		return false;
+	}
+	
 	public boolean checkCollisionBomb(Bomb bomb) {
 
 		if (circle.getBoundsInParent().intersects(bomb.getBoundsInParent())) {
@@ -464,60 +503,85 @@ public abstract class BBtan implements Initializable {
     	boolean rightBorder = circle.getLayoutX() >= (bounds.getMaxX() - circle.getRadius());
         boolean leftBorder = circle.getLayoutX() <= (bounds.getMinX() + circle.getRadius());
         boolean topBorder = circle.getLayoutY() <= (bounds.getMinY() + circle.getRadius());
-        
 
         if (rightBorder || leftBorder) {
             deltaX *= -1;
-			DeltaXArr.set(0, deltaX);
         }
         if(topBorder) {
         	deltaY*=-1;
-			DeltaYArr.set(0, deltaY);
         } 
+        if(BallCount >1 && Mode.mode.equals(Mode.FallingBricks))
+        {
+        	/*for(int i = 1 ;i<Ball.size();i++)
+        	{
+        		boolean NewrightBorder = Ball.get(i).getLayoutX() >= (bounds.getMaxX() - Ball.get(i).getRadius());
+        		boolean NewleftBorder = Ball.get(i).getLayoutX() <= (bounds.getMinX() + Ball.get(i).getRadius());
+        		boolean NewtopBorder = Ball.get(i).getLayoutY() <= (bounds.getMinY() + Ball.get(i).getRadius());       
+        		if (NewrightBorder || NewleftBorder) {
+        			double tmpDeltaX = DeltaXArr.get(i);
+        			tmpDeltaX *= -1;
+        			DeltaXArr.set(i, tmpDeltaX);
+        		}
+        		if(NewtopBorder) {
+        			double tmpDeltaY = DeltaYArr.get(i);
+        			tmpDeltaY *= -1;
+        			DeltaYArr.set(i, tmpDeltaY);
+        		} 
+        		System.out.println(NewrightBorder);
+        		System.out.println(NewleftBorder);
+        		System.out.println(NewtopBorder);
+        		System.out.println(i+" Current Dx: "+ DeltaXArr.get(i));
+        		System.out.println(i+" Current Dy: "+ DeltaYArr.get(i));
+        	}*/
+        }
 
-        
     }
     
     //check if the circle collide with the bottomZone
     public void checkCollisionBottomZone(){
         
     	
-    	if(circle.getBoundsInParent().intersects(bottomZone.getBoundsInParent())){
+    	if(circle.getBoundsInParent().intersects(bottomZone.getBoundsInParent()) || (Mode.mode.equals(Mode.FallingBricks) && BallCount > 1 && newBall.getBoundsInParent().intersects(bottomZone.getBoundsInParent())))
+    	{
             
         	timeline.stop();           
             
             deltaX = 0;
             deltaY = -1;
-            
+
             
             circle.setLayoutY(bottomZone.getLayoutY()-circle.getRadius()-2);  
             
             if(Mode.mode.equals(Mode.FallingBricks)) {
+            	
+            	if(BallCount >1)
+            	{
+            		DeltaXArr.set(Integer.valueOf(newBall.getId()), (double) 0);
+            		DeltaXArr.set(Integer.valueOf(newBall.getId()), (double) -1);
+            		newBall.setLayoutY(bottomZone.getLayoutY()-newBall.getRadius()-2); 
+            	}
+
+            	
             	FallingBricksDown();
             	//reset all Ball x and y
-            	for(int i = 0 ;i<Ball.size();i++)
+            	for(int i = 1 ;i<Ball.size();i++)
             	{
             		Ball.get(i).setLayoutX(circle.getLayoutX());
             		Ball.get(i).setLayoutY(circle.getLayoutY());
             	}
             	//add Ball	
-            	Circle newBall = new Circle(circle.getLayoutX(),circle.getLayoutY(),10,Color.BLACK);
+            	newBall = new Circle(circle.getLayoutX(),circle.getLayoutY(),10,Color.BLACK);
+        		/*System.out.println(" Current X: "+ Ball.get(1).getLayoutX());
+        		System.out.println(" Current Y: "+ Ball.get(1).getLayoutY());*/
             	Ball.add(newBall);
+            	newBall.setId(String.valueOf(BallCount));
             	scene.getChildren().add(newBall);
+            	
             	BallCount++;	
             	//set new ball default deltax and deltay
         		DeltaXArr.add((double) 1);
         		DeltaYArr.add((double) -1);
-        		
-            		System.out.println("Dx= "+ DeltaXArr.get(0));
-            		System.out.println("Dy= "+ DeltaYArr.get(0));
-            		System.out.println("========================");
-            		System.out.println("Dx= "+ DeltaXArr.get(1));
-            		System.out.println("Dy= "+ DeltaYArr.get(1));
-            		System.out.println("========================");
-            		System.out.println("Dx= "+ DeltaXArr.get(2));
-            		System.out.println("Dy= "+ DeltaYArr.get(2));
-            		System.out.println("========================");
+
             }else {
             	bricksBombsDown();
             }

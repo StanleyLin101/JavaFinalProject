@@ -132,6 +132,15 @@ public class FallingBricksController extends BBtan {
 				polyline.getPoints().clear();
 				scene.getChildren().removeAll(polyline);
 
+				
+				//reset all ball deltaX deltaY
+				DeltaXArr.set(0, deltaX);
+				DeltaYArr.set(0, deltaY);
+				for(int i = 1 ;i<Ball.size();i++)
+				{
+					DeltaXArr.set(i, deltaX);
+					DeltaYArr.set(i, deltaY);
+				}
 			}
 
 		}
